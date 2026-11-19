@@ -1,0 +1,2431 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduSpark | Nền Tảng Học Tập Trực Tuyến Thông Minh</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Safe CDN Initializers -->
+    <script>
+        let tailwindReady = false;
+        function initTailwindConfig() {
+            if (tailwindReady) return;
+            try {
+                if (typeof window.tailwind !== 'undefined') {
+                    window.tailwind.config = {
+                        theme: {
+                            extend: {
+                                fontFamily: {
+                                    sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                                },
+                                colors: {
+                                    primary: {
+                                        50: '#eef2ff',
+                                        100: '#e0e7ff',
+                                        500: '#6366f1',
+                                        600: '#4f46e5',
+                                        700: '#4338ca',
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    tailwindReady = true;
+                }
+            } catch (e) {
+                console.warn('Tailwind config warning:', e);
+            }
+        }
+
+        function safeCreateIcons(options) {
+            try {
+                if (typeof window.lucide !== 'undefined' && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons(options);
+                }
+            } catch (e) {
+                console.warn('Lucide icon warning:', e);
+            }
+        }
+    </script>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com" onload="initTailwindConfig()"></script>
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest" onload="safeCreateIcons()"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        /* Ẩn thanh cuộn nhưng vẫn cho phép cuộn ngang mượt */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Hiệu ứng lật thẻ Flashcard 3D */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        /* Hiệu ứng Toast */
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(14px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .toast-anim {
+            animation: slideUpFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-indigo-600 selection:text-white overflow-x-hidden">
+
+    <!-- ==================== STICKY HEADER ==================== -->
+    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 sm:h-20 gap-3">
+                
+                <!-- Brand Logo -->
+                <button onclick="switchMainView('explore')" class="flex items-center gap-2.5 shrink-0 group focus:outline-none text-left">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform">
+                        <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 leading-none">
+                            Edu<span class="text-indigo-600">Spark</span>
+                        </span>
+                        <span class="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mt-0.5">
+                            Smart Learning
+                        </span>
+                    </div>
+                </button>
+
+                <!-- Desktop Navigation Tabs -->
+                <nav class="hidden md:flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/70">
+                    <button 
+                        data-nav-tab="explore"
+                        onclick="switchMainView('explore')"
+                        class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
+                    >
+                        <i data-lucide="compass" class="w-4 h-4"></i>
+                        <span>Khám phá</span>
+                    </button>
+                    <button 
+                        data-nav-tab="my-learning"
+                        onclick="switchMainView('my-learning')"
+                        class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
+                    >
+                        <i data-lucide="book-open-check" class="w-4 h-4"></i>
+                        <span>Khóa học của tôi</span>
+                        <span id="navEnrolledBadge" class="px-1.5 py-0.5 text-[11px] font-bold rounded-full bg-indigo-100 text-indigo-700">2</span>
+                    </button>
+                    <button 
+                        data-nav-tab="study-hub"
+                        onclick="switchMainView('study-hub')"
+                        class="nav-tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
+                    >
+                        <i data-lucide="brain-circuit" class="w-4 h-4"></i>
+                        <span>Góc tập trung</span>
+                    </button>
+                </nav>
+
+                <!-- Right Gamification Stats & Profile -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Study Streak -->
+                    <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-700 text-xs font-bold" title="Chuỗi ngày học liên tiếp">
+                        <i data-lucide="flame" class="w-4 h-4 text-orange-500 fill-orange-500"></i>
+                        <span id="streakDisplay">7 ngày</span>
+                    </div>
+
+                    <!-- XP Points -->
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-xs font-bold" title="Điểm kinh nghiệm học tập">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-indigo-600"></i>
+                        <span id="xpDisplay">1.250 XP</span>
+                    </div>
+
+                    <!-- User Avatar / Name Edit Trigger -->
+                    <button 
+                        onclick="openProfileModal()"
+                        class="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-semibold transition shadow-sm"
+                        title="Cài đặt hồ sơ học viên"
+                    >
+                        <span id="avatarInitials" class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-400 to-fuchsia-500 flex items-center justify-center text-white font-bold text-xs">
+                            MA
+                        </span>
+                        <span id="headerUserName" class="hidden lg:inline max-w-[100px] truncate">Minh Anh</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Bottom-Style Navigation Tabs inside Header -->
+            <div class="md:hidden pb-3 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                <button 
+                    data-nav-tab="explore"
+                    onclick="switchMainView('explore')"
+                    class="nav-tab-btn flex-1 justify-center px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap"
+                >
+                    <i data-lucide="compass" class="w-3.5 h-3.5"></i>
+                    <span>Khám phá</span>
+                </button>
+                <button 
+                    data-nav-tab="my-learning"
+                    onclick="switchMainView('my-learning')"
+                    class="nav-tab-btn flex-1 justify-center px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap"
+                >
+                    <i data-lucide="book-open-check" class="w-3.5 h-3.5"></i>
+                    <span>Của tôi</span>
+                </button>
+                <button 
+                    data-nav-tab="study-hub"
+                    onclick="switchMainView('study-hub')"
+                    class="nav-tab-btn flex-1 justify-center px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap"
+                >
+                    <i data-lucide="brain-circuit" class="w-3.5 h-3.5"></i>
+                    <span>Tập trung</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== VIEW 1: EXPLORE (KHÁM PHÁ KHÓA HỌC) ==================== -->
+    <div id="view-explore" class="main-view">
+        
+        <!-- Hero Banner -->
+        <section class="relative overflow-hidden bg-slate-950 text-white">
+            <!-- Soft Radial Glows -->
+            <div class="absolute -top-24 left-1/4 w-96 h-96 bg-indigo-600/30 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-fuchsia-600/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute inset-0 bg-[radial-gradient(#ffffff14_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none"></div>
+
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                    
+                    <!-- Left Copy -->
+                    <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs sm:text-sm font-medium text-indigo-200 backdrop-blur-sm">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>Hơn 45.000 học viên đang nâng cấp kỹ năng mỗi ngày</span>
+                        </div>
+
+                        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12]">
+                            Học Tập Chủ Động, <br class="hidden sm:block">
+                            <span class="bg-gradient-to-r from-indigo-400 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">
+                                Làm Chủ Tương Lai
+                            </span>
+                        </h1>
+
+                        <p class="text-slate-300 text-sm sm:text-base lg:text-lg max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                            Lộ trình bài bản từ cơ bản đến chuyên sâu với bài giảng tương tác, bài tập trắc nghiệm thực hành, Flashcard ghi nhớ thông minh và chứng chỉ hoàn thành trực tuyến.
+                        </p>
+
+                        <!-- Hero Search Bar -->
+                        <div class="max-w-xl mx-auto lg:mx-0 pt-1">
+                            <div class="relative flex items-center bg-white rounded-2xl p-1.5 shadow-xl shadow-indigo-950/30">
+                                <span class="pl-3.5 text-slate-400">
+                                    <i data-lucide="search" class="w-5 h-5"></i>
+                                </span>
+                                <input 
+                                    type="text" 
+                                    id="courseSearchInput"
+                                    placeholder="Tìm khóa học Python, UI/UX, IELTS, Data Science..."
+                                    class="w-full px-3 py-2.5 text-sm sm:text-base text-slate-800 placeholder-slate-400 bg-transparent focus:outline-none"
+                                >
+                                <button 
+                                    onclick="scrollToCatalog()"
+                                    class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition shrink-0"
+                                >
+                                    Tìm kiếm
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quick Metrics -->
+                        <div class="flex flex-wrap items-center justify-center lg:justify-start gap-6 pt-2 text-xs sm:text-sm text-slate-300">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+                                <span>Học mọi lúc mọi nơi</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+                                <span>Quiz kiểm tra từng bài</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+                                <span>Cấp chứng chỉ số</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Interactive Daily Dashboard Card -->
+                    <div class="lg:col-span-5">
+                        <div class="rounded-3xl bg-white/10 border border-white/15 backdrop-blur-md p-6 shadow-2xl space-y-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs font-semibold uppercase tracking-wider text-indigo-300">Mục tiêu hôm nay</p>
+                                    <h3 class="text-lg font-bold text-white mt-0.5">Xin chào, <span id="heroUserName">Minh Anh</span>! 👋</h3>
+                                </div>
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/25">
+                                    <i data-lucide="trophy" class="w-6 h-6"></i>
+                                </div>
+                            </div>
+
+                            <!-- Daily Study Progress -->
+                            <div class="bg-slate-900/70 rounded-2xl p-4 border border-white/10 space-y-2.5">
+                                <div class="flex items-center justify-between text-xs sm:text-sm">
+                                    <span class="text-slate-300 font-medium">Tiến độ bài học hôm nay</span>
+                                    <span id="dailyGoalText" class="font-bold text-emerald-400">2 / 4 bài</span>
+                                </div>
+                                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                                    <div id="dailyGoalBar" class="h-full bg-gradient-to-r from-indigo-500 via-violet-500 to-emerald-400 rounded-full transition-all duration-500" style="width: 50%;"></div>
+                                </div>
+                                <p class="text-[11px] text-slate-400">Hoàn thành thêm bài học hoặc phiên Pomodoro để nhận thêm điểm XP!</p>
+                            </div>
+
+                            <!-- Quick Jump Actions -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <button 
+                                    onclick="openClassroom(1)"
+                                    class="p-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-left transition group"
+                                >
+                                    <div class="flex items-center justify-between mb-2">
+                                        <i data-lucide="play-circle" class="w-5 h-5 text-indigo-200"></i>
+                                        <i data-lucide="arrow-up-right" class="w-4 h-4 text-indigo-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition"></i>
+                                    </div>
+                                    <p class="text-xs text-indigo-200 font-medium">Tiếp tục học</p>
+                                    <p class="text-sm font-bold text-white truncate mt-0.5">Web Fullstack JS</p>
+                                </button>
+                                <button 
+                                    onclick="switchMainView('study-hub')"
+                                    class="p-3.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-left transition group"
+                                >
+                                    <div class="flex items-center justify-between mb-2">
+                                        <i data-lucide="timer" class="w-5 h-5 text-amber-300"></i>
+                                        <i data-lucide="arrow-up-right" class="w-4 h-4 text-slate-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition"></i>
+                                    </div>
+                                    <p class="text-xs text-slate-300 font-medium">Góc tập trung</p>
+                                    <p class="text-sm font-bold text-white truncate mt-0.5">Pomodoro & Flashcard</p>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Learning Path Highlights -->
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="code-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="font-extrabold text-slate-900 text-base sm:text-lg leading-none">120+</p>
+                        <p class="text-xs text-slate-500 mt-1">Khóa học thực chiến</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="font-extrabold text-slate-900 text-base sm:text-lg leading-none">45.000+</p>
+                        <p class="text-xs text-slate-500 mt-1">Học viên tích cực</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="layers" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="font-extrabold text-slate-900 text-base sm:text-lg leading-none">1.500+</p>
+                        <p class="text-xs text-slate-500 mt-1">Bài giảng & Quiz</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="award" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="font-extrabold text-slate-900 text-base sm:text-lg leading-none">Chứng chỉ</p>
+                        <p class="text-xs text-slate-500 mt-1">Xác thực năng lực</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Course Catalog Section -->
+        <main id="catalog-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1.5 mb-1">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        Thư viện tri thức
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                        Khóa Học Nổi Bật
+                    </h2>
+                </div>
+                <p class="text-sm text-slate-500">
+                    Đang hiển thị <strong id="courseCountDisplay" class="text-slate-900">8</strong> khóa học
+                </p>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200/80 shadow-sm mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <!-- Category Pills -->
+                <div id="categoryFilterBar" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 lg:pb-0">
+                    <!-- Rendered dynamically -->
+                </div>
+
+                <!-- Level Filter -->
+                <div class="flex items-center gap-2.5 shrink-0 border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-100">
+                    <label for="levelFilterSelect" class="text-xs sm:text-sm font-medium text-slate-500 whitespace-nowrap flex items-center gap-1.5">
+                        <i data-lucide="sliders-horizontal" class="w-4 h-4 text-slate-400"></i>
+                        Trình độ:
+                    </label>
+                    <select 
+                        id="levelFilterSelect" 
+                        onchange="handleLevelChange(this.value)"
+                        class="w-full sm:w-auto text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200/70 border border-slate-200 rounded-xl px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                    >
+                        <option value="Tất cả">Tất cả trình độ</option>
+                        <option value="Cơ bản">Cơ bản</option>
+                        <option value="Trung cấp">Trung cấp</option>
+                        <option value="Nâng cao">Nâng cao</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Course Grid -->
+            <div id="courseGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6">
+                <!-- Rendered by JavaScript -->
+            </div>
+
+            <!-- Empty Search State -->
+            <div id="courseEmptyState" class="hidden text-center py-16 px-4 bg-white rounded-3xl border border-slate-200">
+                <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="search-x" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Không tìm thấy khóa học phù hợp</h3>
+                <p class="text-sm text-slate-500 mt-1">Hãy thử đổi từ khóa hoặc đặt lại bộ lọc danh mục nhé.</p>
+                <button onclick="resetCourseFilters()" class="mt-5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition">
+                    Xem tất cả khóa học
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== VIEW 2: MY LEARNING (KHÓA HỌC CỦA TÔI) ==================== -->
+    <div id="view-my-learning" class="main-view hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-8">
+            
+            <!-- Dashboard Summary Header -->
+            <div class="rounded-3xl bg-gradient-to-r from-indigo-700 via-violet-700 to-indigo-900 p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div class="space-y-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-xs font-bold uppercase tracking-wider">
+                        <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+                        Lộ trình cá nhân
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Khóa Học Của Tôi</h2>
+                    <p class="text-indigo-100 text-sm max-w-xl">
+                        Theo dõi tiến độ chi tiết, tiếp tục bài giảng dang dở và nhận chứng chỉ điện tử ngay khi hoàn thành 100% khóa học.
+                    </p>
+                </div>
+                <div class="grid grid-cols-3 gap-3 w-full md:w-auto">
+                    <div class="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3.5 text-center">
+                        <p id="statEnrolledCount" class="text-2xl font-extrabold">2</p>
+                        <p class="text-[11px] text-indigo-200 mt-0.5">Đang học</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3.5 text-center">
+                        <p id="statCompletedLessons" class="text-2xl font-extrabold">2</p>
+                        <p class="text-[11px] text-indigo-200 mt-0.5">Bài đã xong</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3.5 text-center">
+                        <p id="statCertCount" class="text-2xl font-extrabold">0</p>
+                        <p class="text-[11px] text-indigo-200 mt-0.5">Chứng chỉ</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enrolled Courses Grid -->
+            <div id="myLearningGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Populated Dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== VIEW 3: STUDY HUB (GÓC TẬP TRUNG: POMODORO + FLASHCARDS + TODO) ==================== -->
+    <div id="view-study-hub" class="main-view hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-8">
+            
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1.5 mb-1">
+                        <i data-lucide="brain-circuit" class="w-4 h-4"></i>
+                        Công cụ hỗ trợ học tập sâu
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                        Góc Tập Trung & Ghi Nhớ Thông Minh
+                    </h2>
+                </div>
+                <p class="text-sm text-slate-500">Kết hợp kỹ thuật Pomodoro và ôn tập chủ động bằng Flashcard</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left Column: Pomodoro Timer & Study Tasks -->
+                <div class="lg:col-span-5 space-y-6">
+                    
+                    <!-- Pomodoro Timer Card -->
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-5">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                                <span class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                                    <i data-lucide="timer" class="w-4 h-4"></i>
+                                </span>
+                                Đồng hồ Pomodoro
+                            </h3>
+                            <span id="pomoSessionBadge" class="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold">
+                                Đã xong: 0 phiên
+                            </span>
+                        </div>
+
+                        <!-- Mode Selector -->
+                        <div class="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-xl">
+                            <button onclick="setPomodoroMode('focus')" id="pomoMode-focus" class="pomo-mode-btn py-2 rounded-lg text-xs font-bold transition bg-white text-indigo-600 shadow-sm">
+                                Tập trung (25p)
+                            </button>
+                            <button onclick="setPomodoroMode('short')" id="pomoMode-short" class="pomo-mode-btn py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900">
+                                Nghỉ ngắn (5p)
+                            </button>
+                            <button onclick="setPomodoroMode('long')" id="pomoMode-long" class="pomo-mode-btn py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900">
+                                Nghỉ dài (15p)
+                            </button>
+                        </div>
+
+                        <!-- Clock Display -->
+                        <div class="py-6 text-center rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 text-white relative overflow-hidden">
+                            <div class="relative z-10">
+                                <p id="pomoStatusText" class="text-xs font-semibold uppercase tracking-widest text-indigo-300 mb-2">Sẵn sàng tập trung</p>
+                                <div id="pomoTimeDisplay" class="text-5xl sm:text-6xl font-extrabold font-mono tracking-tight">25:00</div>
+                            </div>
+                            <div class="absolute bottom-0 left-0 right-0 h-1.5 bg-white/10">
+                                <div id="pomoProgressBar" class="h-full bg-gradient-to-r from-indigo-400 to-emerald-400 transition-all duration-500" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Controls -->
+                        <div class="flex items-center gap-3">
+                            <button 
+                                id="pomoToggleBtn"
+                                onclick="togglePomodoro()"
+                                class="flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition active:scale-95"
+                            >
+                                <i data-lucide="play" class="w-4 h-4"></i>
+                                <span>Bắt đầu</span>
+                            </button>
+                            <button 
+                                onclick="resetPomodoro()"
+                                class="p-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                                title="Đặt lại đồng hồ"
+                            >
+                                <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Study Checklist Card -->
+                    <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                                <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                    <i data-lucide="list-checks" class="w-4 h-4"></i>
+                                </span>
+                                Mục tiêu học hôm nay
+                            </h3>
+                            <span id="todoProgressBadge" class="text-xs font-bold text-slate-500">1/3 xong</span>
+                        </div>
+
+                        <form onsubmit="addStudyTask(event)" class="flex gap-2">
+                            <input 
+                                type="text" 
+                                id="newTaskInput"
+                                placeholder="Thêm mục tiêu mới (VD: Ôn 20 từ vựng IELTS)..."
+                                class="flex-1 px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:border-indigo-500"
+                            >
+                            <button type="submit" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white font-bold text-sm transition shrink-0">
+                                Thêm
+                            </button>
+                        </form>
+
+                        <ul id="studyTaskList" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Right Column: Interactive 3D Flashcards -->
+                <div class="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-lg flex items-center gap-2">
+                                <span class="w-8 h-8 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center">
+                                    <i data-lucide="layers" class="w-4 h-4"></i>
+                                </span>
+                                Thẻ Ghi Nhớ (Flashcards)
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Nhấn vào thẻ để lật xem giải nghĩa chi tiết</p>
+                        </div>
+
+                        <!-- Deck Selector -->
+                        <select 
+                            id="flashcardDeckSelect" 
+                            onchange="changeFlashcardDeck(this.value)"
+                            class="text-xs sm:text-sm font-semibold text-slate-700 bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                        >
+                            <option value="english">Tiếng Anh Chuyên Ngành IT</option>
+                            <option value="coding">Khái Niệm Lập Trình Web</option>
+                            <option value="design">Nguyên Lý Thiết Kế UI/UX</option>
+                        </select>
+                    </div>
+
+                    <!-- Card Counter & Mastered Bar -->
+                    <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                        <span id="flashcardCounter">Thẻ 1 / 5</span>
+                        <span id="flashcardMasteredText" class="text-emerald-600">Đã thuộc: 0 thẻ</span>
+                    </div>
+
+                    <!-- 3D Flip Card Stage -->
+                    <div class="perspective-1000 w-full h-64 sm:h-72 cursor-pointer select-none" onclick="flipFlashcard()">
+                        <div id="flashcardInner" class="relative w-full h-full transform-style-3d">
+                            <!-- Front Side -->
+                            <div class="absolute inset-0 backface-hidden rounded-3xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 border-2 border-indigo-200/80 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-inner">
+                                <span class="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-bold uppercase tracking-wider mb-4">
+                                    Thuật ngữ / Câu hỏi
+                                </span>
+                                <h4 id="fcFrontText" class="text-2xl sm:text-3xl font-extrabold text-slate-900"></h4>
+                                <p id="fcHintText" class="text-xs sm:text-sm text-slate-500 mt-3"></p>
+                                <span class="mt-6 text-xs font-medium text-indigo-500 flex items-center gap-1">
+                                    <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> Chạm để lật mặt sau
+                                </span>
+                            </div>
+
+                            <!-- Back Side -->
+                            <div class="absolute inset-0 backface-hidden rotate-y-180 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-xl">
+                                <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold uppercase tracking-wider mb-4">
+                                    Định nghĩa & Ví dụ
+                                </span>
+                                <p id="fcBackText" class="text-base sm:text-lg font-semibold leading-relaxed max-w-lg"></p>
+                                <p id="fcExampleText" class="text-xs sm:text-sm text-indigo-200 italic mt-3 bg-white/10 px-3.5 py-2 rounded-xl"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flashcard Controls -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                        <div class="flex items-center gap-2">
+                            <button onclick="navigateFlashcard(-1)" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-1 transition">
+                                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                                <span>Trước</span>
+                            </button>
+                            <button onclick="navigateFlashcard(1)" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm flex items-center gap-1 transition">
+                                <span>Sau</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+
+                        <button 
+                            id="fcMasterBtn"
+                            onclick="toggleMasterCurrentCard()"
+                            class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center gap-2 transition shadow-sm"
+                        >
+                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                            <span>Đánh dấu đã thuộc</span>
+                        </button>
+                    </div>
+
+                    <!-- Add Custom Flashcard Form -->
+                    <div class="border-t border-slate-100 pt-5">
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Tạo thẻ ghi nhớ mới vào bộ hiện tại</p>
+                        <form onsubmit="addCustomFlashcard(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                            <input 
+                                type="text" 
+                                id="customFcFront" 
+                                required 
+                                placeholder="Mặt trước (Thuật ngữ)"
+                                class="sm:col-span-5 px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:border-indigo-500"
+                            >
+                            <input 
+                                type="text" 
+                                id="customFcBack" 
+                                required 
+                                placeholder="Mặt sau (Giải nghĩa)"
+                                class="sm:col-span-5 px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:border-indigo-500"
+                            >
+                            <button type="submit" class="sm:col-span-2 py-2 px-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-sm border border-indigo-200 transition">
+                                + Thêm
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== INTERACTIVE CLASSROOM MODAL (PHÒNG HỌC TRỰC TUYẾN) ==================== -->
+    <div id="classroomModal" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
+        <div class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm"></div>
+        <div class="fixed inset-0 overflow-y-auto p-2 sm:p-5 flex items-center justify-center">
+            <div class="relative w-full max-w-6xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[94vh]">
+                
+                <!-- Classroom Top Bar -->
+                <div class="flex items-center justify-between px-5 py-3.5 bg-slate-900 text-white shrink-0 gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <span class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="play" class="w-4 h-4 fill-white"></i>
+                        </span>
+                        <div class="min-w-0">
+                            <h3 id="crCourseTitle" class="font-bold text-sm sm:text-base truncate">Tên khóa học</h3>
+                            <div class="flex items-center gap-2.5 text-xs text-slate-300 mt-0.5">
+                                <span id="crProgressText">Tiến độ: 0%</span>
+                                <div class="w-24 sm:w-32 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                                    <div id="crProgressBar" class="h-full bg-emerald-400 rounded-full transition-all duration-300" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button 
+                            id="crCertBtn"
+                            onclick="openCertificateForCurrentCourse()"
+                            class="hidden px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs items-center gap-1.5 transition"
+                        >
+                            <i data-lucide="award" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">Nhận chứng chỉ</span>
+                        </button>
+                        <button 
+                            onclick="closeClassroom()" 
+                            class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition"
+                            aria-label="Đóng phòng học"
+                        >
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Classroom Body Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-y-auto">
+                    
+                    <!-- Main Lesson Stage (Left 8 cols) -->
+                    <div class="lg:col-span-8 p-5 sm:p-6 space-y-6 lg:border-r border-slate-200 overflow-y-auto">
+                        
+                        <!-- Simulated Interactive Video / Slide Player -->
+                        <div class="relative rounded-2xl overflow-hidden bg-slate-950 text-white aspect-video flex flex-col justify-between p-5 sm:p-7 shadow-lg">
+                            <img id="crStageBg" src="" alt="" class="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none">
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent pointer-events-none"></div>
+
+                            <!-- Player Top Info -->
+                            <div class="relative z-10 flex items-center justify-between">
+                                <span id="crLessonBadge" class="px-3 py-1 rounded-full bg-indigo-600/90 text-xs font-bold">Bài 1</span>
+                                <span id="crLessonDuration" class="px-2.5 py-1 rounded-lg bg-black/50 text-xs font-mono">12:30</span>
+                            </div>
+
+                            <!-- Center Play Control -->
+                            <div class="relative z-10 text-center my-auto space-y-3">
+                                <button 
+                                    id="crPlayBtn"
+                                    onclick="toggleLessonPlayback()"
+                                    class="w-16 h-16 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center mx-auto shadow-xl shadow-indigo-600/40 transition hover:scale-105 active:scale-95"
+                                >
+                                    <i id="crPlayIcon" data-lucide="play" class="w-7 h-7 fill-white ml-0.5"></i>
+                                </button>
+                                <h4 id="crLessonHeading" class="text-lg sm:text-2xl font-extrabold max-w-xl mx-auto leading-snug"></h4>
+                            </div>
+
+                            <!-- Bottom Scrubber Bar -->
+                            <div class="relative z-10 space-y-2">
+                                <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                                    <div id="crVideoProgress" class="h-full bg-indigo-400 rounded-full transition-all duration-300" style="width: 15%;"></div>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px] text-slate-300">
+                                    <span id="crPlaybackStateText">Nhấn Play để xem bài giảng tương tác</span>
+                                    <span>HD 1080p • Phụ đề VI</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lesson Action Row -->
+                        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200">
+                            <div>
+                                <h4 id="crLessonTitleSub" class="font-bold text-slate-900 text-base sm:text-lg"></h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Hoàn thành bài học này để nhận ngay +50 XP</p>
+                            </div>
+                            <button 
+                                id="crCompleteLessonBtn"
+                                onclick="toggleCurrentLessonComplete()"
+                                class="px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition"
+                            >
+                                <!-- Dynamic text -->
+                            </button>
+                        </div>
+
+                        <!-- Lesson Content & Takeaways -->
+                        <div class="space-y-3">
+                            <h5 class="font-bold text-slate-900 text-sm uppercase tracking-wider flex items-center gap-2">
+                                <i data-lucide="file-text" class="w-4 h-4 text-indigo-600"></i>
+                                Kiến thức trọng tâm
+                            </h5>
+                            <p id="crLessonSummary" class="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80"></p>
+                        </div>
+
+                        <!-- Interactive Mini-Quiz Box -->
+                        <div class="rounded-2xl bg-indigo-50/70 border border-indigo-200/80 p-5 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h5 class="font-bold text-indigo-950 text-sm flex items-center gap-2">
+                                    <i data-lucide="help-circle" class="w-4 h-4 text-indigo-600"></i>
+                                    Câu hỏi trắc nghiệm nhanh (+30 XP)
+                                </h5>
+                                <span id="crQuizStatus" class="text-xs font-bold text-indigo-600"></span>
+                            </div>
+                            <p id="crQuizQuestion" class="font-bold text-slate-900 text-sm sm:text-base"></p>
+                            <div id="crQuizOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <!-- Options dynamically rendered -->
+                            </div>
+                            <p id="crQuizFeedback" class="hidden text-xs sm:text-sm font-semibold p-3 rounded-xl"></p>
+                        </div>
+
+                        <!-- Personal Lesson Notes -->
+                        <div class="space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <label for="crLessonNoteInput" class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                                    <i data-lucide="notebook-pen" class="w-4 h-4 text-indigo-600"></i>
+                                    Ghi chú cá nhân cho bài học này
+                                </label>
+                                <span id="crNoteSavedHint" class="text-xs text-emerald-600 font-semibold hidden">Đã lưu ghi chú ✓</span>
+                            </div>
+                            <textarea 
+                                id="crLessonNoteInput"
+                                rows="3"
+                                oninput="saveCurrentLessonNote(this.value)"
+                                placeholder="Ghi lại ý chính, công thức hoặc câu hỏi cần ôn tập..."
+                                class="w-full p-3.5 text-sm bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Curriculum Sidebar (Right 4 cols) -->
+                    <div class="lg:col-span-4 bg-slate-50/80 p-5 flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="font-bold text-slate-900 text-sm uppercase tracking-wider">Nội dung khóa học</h4>
+                            <span id="crLessonsRatio" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">0/4 bài</span>
+                        </div>
+
+                        <div id="crSyllabusList" class="space-y-2.5 flex-1 overflow-y-auto">
+                            <!-- Lesson items rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== CERTIFICATE MODAL (CHỨNG CHỈ HOÀN THÀNH) ==================== -->
+    <div id="certificateModal" class="fixed inset-0 z-[60] hidden" aria-modal="true" role="dialog">
+        <div onclick="closeCertificateModal()" class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm"></div>
+        <div class="fixed inset-0 overflow-y-auto p-4 flex items-center justify-center">
+            <div class="relative w-full max-w-2xl bg-white rounded-3xl p-4 sm:p-6 shadow-2xl border border-slate-200 my-auto">
+                <button onclick="closeCertificateModal()" class="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+
+                <!-- Certificate Artwork Frame -->
+                <div class="rounded-2xl border-4 border-double border-indigo-200 bg-gradient-to-br from-indigo-50/60 via-white to-amber-50/50 p-6 sm:p-10 text-center space-y-5 relative overflow-hidden">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-amber-500/25">
+                        <i data-lucide="award" class="w-9 h-9"></i>
+                    </div>
+
+                    <div class="space-y-1">
+                        <p class="text-xs font-extrabold uppercase tracking-[0.25em] text-indigo-600">EduSpark Academy</p>
+                        <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900">CHỨNG CHỈ HOÀN THÀNH</h3>
+                        <p class="text-xs text-slate-500">Chứng nhận học viên sau đây đã hoàn thành xuất sắc chương trình đào tạo</p>
+                    </div>
+
+                    <div class="py-2">
+                        <p id="certStudentName" class="text-2xl sm:text-3xl font-extrabold text-indigo-700 border-b-2 border-indigo-200 inline-block px-6 pb-1">
+                            Minh Anh
+                        </p>
+                    </div>
+
+                    <div class="space-y-1">
+                        <p class="text-xs text-slate-500">Đã hoàn thành 100% nội dung và bài kiểm tra của khóa học:</p>
+                        <p id="certCourseTitle" class="text-base sm:text-lg font-extrabold text-slate-900"></p>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-6 border-t border-slate-200/80 text-xs text-slate-500">
+                        <div class="text-left">
+                            <p class="font-bold text-slate-800">Ngày cấp</p>
+                            <p id="certDateDisplay">19/11/2026</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="font-mono font-bold text-indigo-600" id="certCodeDisplay">EDU-2026-8891</p>
+                            <p class="text-[10px]">Mã xác thực điện tử</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-slate-800">Giám đốc Học thuật</p>
+                            <p class="italic text-indigo-700 font-semibold">EduSpark Vietnam</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex justify-end gap-2">
+                    <button onclick="copyCertificateId()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        <span>Sao chép mã chứng chỉ</span>
+                    </button>
+                    <button onclick="closeCertificateModal()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm transition">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== PROFILE SETTINGS MODAL ==================== -->
+    <div id="profileModal" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
+        <div onclick="closeProfileModal()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"></div>
+        <div class="fixed inset-0 p-4 flex items-center justify-center">
+            <div class="relative w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-5">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-slate-900 text-lg">Hồ sơ học viên</h3>
+                    <button onclick="closeProfileModal()" class="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <form onsubmit="saveUserProfile(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Tên hiển thị (In trên chứng chỉ)</label>
+                        <input 
+                            type="text" 
+                            id="profileNameInput" 
+                            required
+                            class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Mục tiêu bài học mỗi ngày</label>
+                        <select id="profileGoalInput" class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-indigo-500">
+                            <option value="2">Nhẹ nhàng (2 bài / ngày)</option>
+                            <option value="4" selected>Tiêu chuẩn (4 bài / ngày)</option>
+                            <option value="6">Tăng tốc (6 bài / ngày)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition">
+                        Lưu thay đổi
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center text-white">
+                    <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                </div>
+                <span class="font-extrabold text-white text-base">Edu<span class="text-indigo-400">Spark</span></span>
+                <span class="text-slate-500">• Học tập chủ động mỗi ngày</span>
+            </div>
+            <p class="text-slate-500">© 2026 EduSpark Learning Platform. Thiết kế dành cho người học hiện đại.</p>
+        </div>
+    </footer>
+
+    <!-- ==================== TOAST CONTAINER ==================== -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 left-4 sm:left-auto z-[70] flex flex-col gap-2 pointer-events-none max-w-sm ml-auto"></div>
+
+    <!-- ==================== APPLICATION JAVASCRIPT ==================== -->
+    <script>
+        /**
+         * Dữ liệu khóa học (8 khóa học đa lĩnh vực, mỗi khóa gồm 3-4 bài học + câu hỏi trắc nghiệm)
+         */
+        const COURSES = [
+            {
+                id: 1,
+                title: "Lập trình Web Fullstack với JavaScript Hiện Đại",
+                category: "Lập trình",
+                level: "Cơ bản",
+                instructor: "TS. Trần Hoàng Nam",
+                rating: 4.9,
+                students: 12450,
+                duration: "18 giờ",
+                priceTag: "Miễn phí",
+                image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80",
+                description: "Xây dựng ứng dụng web hoàn chỉnh từ giao diện HTML/CSS/Tailwind đến logic JavaScript ES6+ và thao tác API thực tế.",
+                lessons: [
+                    {
+                        id: "1-1",
+                        title: "Tổng quan kiến trúc Web & DOM hiện đại",
+                        duration: "12:40",
+                        summary: "Tìm hiểu cách trình duyệt phân tích HTML thành cây DOM, vòng đời tải trang và cách tối ưu hiển thị trên đa thiết bị di động.",
+                        quiz: {
+                            question: "DOM là viết tắt của cụm từ nào trong lập trình Web?",
+                            options: ["Document Object Model", "Data Object Management", "Dynamic Online Module", "Digital Order Map"],
+                            correctIndex: 0
+                        }
+                    },
+                    {
+                        id: "1-2",
+                        title: "Làm chủ Arrow Function, Destructuring & Spread",
+                        duration: "16:15",
+                        summary: "Ứng dụng cú pháp ES6+ giúp mã nguồn JavaScript ngắn gọn, dễ đọc và hạn chế lỗi ngữ cảnh 'this' khi xử lý sự kiện.",
+                        quiz: {
+                            question: "Từ khóa nào dùng để khai báo hằng số không thể gán lại giá trị tham chiếu trong ES6?",
+                            options: ["var", "let", "const", "static"],
+                            correctIndex: 2
+                        }
+                    },
+                    {
+                        id: "1-3",
+                        title: "Xử lý bất đồng bộ với Async/Await & Fetch API",
+                        duration: "21:05",
+                        summary: "Nắm vững Event Loop, Promise và cách gọi dữ liệu JSON từ máy chủ an toàn kết hợp try/catch xử lý lỗi mạng.",
+                        quiz: {
+                            question: "Từ khóa 'await' chỉ có thể sử dụng bên trong loại hàm nào?",
+                            options: ["Hàm thường", "Hàm async", "Hàm callback đồng bộ", "Hàm constructor"],
+                            correctIndex: 1
+                        }
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "Thiết kế Giao diện UI/UX Chuyên Nghiệp với Figma",
+                category: "Thiết kế UI/UX",
+                level: "Cơ bản",
+                instructor: "Lê Minh Thư",
+                rating: 4.9,
+                students: 8920,
+                duration: "14 giờ",
+                priceTag: "Miễn phí",
+                image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=800&q=80",
+                description: "Thành thạo tư duy Design Thinking, xây dựng Design System, Auto Layout và tạo Prototype tương tác mượt mà trên Figma.",
+                lessons: [
+                    {
+                        id: "2-1",
+                        title: "Tư duy lấy người dùng làm trung tâm (UX Research)",
+                        duration: "14:20",
+                        summary: "Cách xây dựng chân dung người dùng (User Persona), bản đồ hành trình (User Journey) và xác định điểm chạm quan trọng.",
+                        quiz: {
+                            question: "Mục tiêu chính của giai đoạn Wireframe độ trung thực thấp là gì?",
+                            options: ["Chọn bảng màu thương hiệu", "Tập trung vào bố cục và luồng thông tin", "Xuất file code CSS", "Tạo hiệu ứng 3D"],
+                            correctIndex: 1
+                        }
+                    },
+                    {
+                        id: "2-2",
+                        title: "Hệ thống lưới 8pt Grid & Typography chuẩn mực",
+                        duration: "18:00",
+                        summary: "Áp dụng tỷ lệ khoảng cách nhất quán, phân cấp thị giác (Visual Hierarchy) giúp giao diện sạch sẽ và dễ đọc trên mọi màn hình.",
+                        quiz: {
+                            question: "Độ tương phản màu chữ tối thiểu theo chuẩn WCAG AA cho văn bản thường là bao nhiêu?",
+                            options: ["2.0:1", "3.0:1", "4.5:1", "10.0:1"],
+                            correctIndex: 2
+                        }
+                    },
+                    {
+                        id: "2-3",
+                        title: "Auto Layout & Component Variants trong Figma",
+                        duration: "22:30",
+                        summary: "Tạo thư viện nút bấm, thẻ thông tin và thanh điều hướng có thể co giãn linh hoạt giúp tăng tốc độ thiết kế gấp 3 lần.",
+                        quiz: {
+                            question: "Tính năng nào trong Figma giúp các phần tử tự động sắp xếp khoảng cách khi nội dung thay đổi?",
+                            options: ["Masking", "Auto Layout", "Boolean Union", "Slice"],
+                            correctIndex: 1
+                        }
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "Python & Phân Tích Dữ Liệu Thực Chiến cho Người Mới",
+                category: "Khoa học Dữ liệu",
+                level: "Trung cấp",
+                instructor: "ThS. Nguyễn Quốc Bảo",
+                rating: 4.8,
+                students: 10340,
+                duration: "22 giờ",
+                priceTag: "Pro",
+                image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+                description: "Làm chủ Pandas, NumPy và trực quan hóa dữ liệu để khai phá xu hướng kinh doanh từ các bộ dữ liệu thực tế.",
+                lessons: [
+                    {
+                        id: "3-1",
+                        title: "Cấu trúc dữ liệu List, Dictionary & List Comprehension",
+                        duration: "15:10",
+                        summary: "Cách lưu trữ và biến đổi dữ liệu nhanh gọn bằng các cấu trúc cốt lõi của Python.",
+                        quiz: {
+                            question: "Kiểu dữ liệu nào trong Python lưu trữ các cặp khóa - giá trị (key-value)?",
+                            options: ["Tuple", "Set", "Dictionary", "List"],
+                            correctIndex: 2
+                        }
+                    },
+                    {
+                        id: "3-2",
+                        title: "Làm sạch dữ liệu với thư viện Pandas DataFrame",
+                        duration: "19:45",
+                        summary: "Xử lý giá trị bị thiếu (NaN), loại bỏ dữ liệu trùng lặp và nhóm tổng hợp dữ liệu bằng phương thức groupby().",
+                        quiz: {
+                            question: "Phương thức nào trong Pandas dùng để xem 5 dòng đầu tiên của một DataFrame?",
+                            options: ["df.top()", "df.head()", "df.first()", "df.show()"],
+                            correctIndex: 1
+                        }
+                    },
+                    {
+                        id: "3-3",
+                        title: "Trực quan hóa biểu đồ chuyên sâu với Matplotlib",
+                        duration: "17:20",
+                        summary: "Lựa chọn đúng loại biểu đồ (cột, đường, phân tán) để kể câu chuyện dữ liệu thuyết phục trước ban lãnh đạo.",
+                        quiz: {
+                            question: "Biểu đồ nào phù hợp nhất để thể hiện xu hướng thay đổi của doanh thu theo từng tháng?",
+                            options: ["Biểu đồ tròn (Pie chart)", "Biểu đồ đường (Line chart)", "Biểu đồ radar", "Biểu đồ hộp"],
+                            correctIndex: 1
+                        }
+                    }
+                ]
+            },
+            {
+                id: 4,
+                title: "Chiến Lược Đạt IELTS 7.5+ Toàn Diện 4 Kỹ Năng",
+                category: "Ngoại ngữ",
+                level: "Trung cấp",
+                instructor: "Cô Hoàng Yến (IELTS 8.5)",
+                rating: 5.0,
+                students: 15210,
+                duration: "26 giờ",
+                priceTag: "Miễn phí",
+                image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=800&q=80",
+                description: "Hệ thống hóa kỹ thuật Skimming/Scanning, cấu trúc Writing Task 2 mạch lạc và phản xạ Speaking tự nhiên chuẩn học thuật.",
+                lessons: [
+                    {
+                        id: "4-1",
+                        title: "Kỹ thuật Skimming & Scanning xử lý Reading tốc độ cao",
+                        duration: "13:50",
+                        summary: "Phân biệt khi nào cần đọc lướt lấy ý chính và khi nào cần dò từ khóa cho dạng bài True/False/Not Given.",
+                        quiz: {
+                            question: "Kỹ thuật 'Scanning' trong IELTS Reading được dùng để làm gì?",
+                            options: ["Đọc kỹ từng từ một", "Tìm nhanh thông tin cụ thể như ngày tháng, tên riêng", "Dịch toàn bộ đoạn văn", "Viết lại tiêu đề"],
+                            correctIndex: 1
+                        }
+                    },
+                    {
+                        id: "4-2",
+                        title: "Cấu trúc bài luận Writing Task 2 đạt chuẩn Coherence",
+                        duration: "20:15",
+                        summary: "Xây dựng câu chủ đề (Topic Sentence), triển khai luận điểm PEEL và sử dụng từ nối tự nhiên không bị rập khuôn.",
+                        quiz: {
+                            question: "Một bài IELTS Writing Task 2 yêu cầu độ dài tối thiểu bao nhiêu từ?",
+                            options: ["150 từ", "200 từ", "250 từ", "350 từ"],
+                            correctIndex: 2
+                        }
+                    },
+                    {
+                        id: "4-3",
+                        title: "Mở rộng câu trả lời IELTS Speaking Part 2 & 3",
+                        duration: "16:40",
+                        summary: "Cách ghi chú 1 phút hiệu quả cho Cue Card và ứng dụng cấu trúc so sánh quá khứ - hiện tại trong Part 3.",
+                        quiz: {
+                            question: "Trong IELTS Speaking Part 2, thí sinh có bao nhiêu thời gian chuẩn bị trước khi nói?",
+                            options: ["30 giây", "1 phút", "2 phút", "3 phút"],
+                            correctIndex: 1
+                        }
+                    }
+                ]
+            },
+            {
+                id: 5,
+                title: "Ứng Dụng Trí Tuệ Nhân Tạo (AI) & Prompt Engineering",
+                category: "Khoa học Dữ liệu",
+                level: "Cơ bản",
+                instructor: "Kỹ sư Phạm Gia Huy",
+                rating: 4.9,
+                students: 19800,
+                duration: "10 giờ",
+                priceTag: "Miễn phí",
+                image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80",
+                description: "Khai thác tối đa sức mạnh của các mô hình ngôn ngữ lớn (LLM) để tự động hóa công việc, nghiên cứu và sáng tạo nội dung.",
+                lessons: [
+                    {
+                        id: "5-1",
+                        title: "Nguyên tắc vàng viết Prompt rõ ràng & có cấu trúc",
+                        duration: "11:20",
+                        summary: "Áp dụng công thức Vai trò + Bối cảnh + Nhiệm vụ + Định dạng đầu ra để nhận kết quả chính xác ngay từ lần đầu.",
+                        quiz: {
+                            question: "Kỹ thuật cung cấp sẵn 2-3 ví dụ mẫu trong câu lệnh cho AI gọi là gì?",
+                            options: ["Zero-shot prompting", "Few-shot prompting", "Overfitting", "Tokenizing"],
+                            correctIndex: 1
+                        }
+                    },
+                    {
+                        id: "5-2",
+                        title: "Tư duy chuỗi (Chain-of-Thought) giải quyết bài toán khó",
+                        duration: "14:55",
+                        summary: "Hướng dẫn mô hình AI suy luận từng bước trước khi đưa ra đáp án cuối cùng nhằm giảm thiểu sai sót logic.",
+                        quiz: {
+                            question: "Lợi ích chính của kỹ thuật Chain-of-Thought (CoT) là gì?",
+                            options: ["Giảm độ dài câu trả lời", "Cải thiện độ chính xác ở bài toán suy luận nhiều bước", "Thay đổi màu chữ", "Tăng tốc độ mạng"],
+                            correctIndex: 1
+                        }
+                    },
+                    {
+                        id: "5-3",
+                        title: "Kiểm chứng thông tin & đạo đức khi sử dụng AI",
+                        duration: "10:30",
+                        summary: "Nhận diện hiện tượng ảo giác (Hallucination) và bảo vệ dữ liệu nhạy cảm khi làm việc với các công cụ AI.",
+                        quiz: {
+                            question: "Hiện tượng AI tạo ra thông tin nghe rất hợp lý nhưng không có thật gọi là gì?",
+                            options: ["Debugging", "Hallucination", "Caching", "Compiling"],
+                            correctIndex: 1
+                        }
+                    }
+                ]
+            },
+            {
+                id: 6,
+                title: "React & Kiến Trúc Ứng Dụng Frontend Nâng Cao",
+                category: "Lập trình",
+                level: "Nâng cao",
+                instructor: "Đặng Minh Khôi",
+                rating: 4.9,
+                students: 6750,
+                duration: "24 giờ",
+                priceTag: "Pro",
+                image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=800&q=80",
+                description: "Đi sâu vào React Hooks, quản lý State quy mô lớn, tối ưu hóa hiệu năng render và thiết kế Component tái sử dụng.",
+                lessons: [
+                    {
+                        id: "6-1",
+                        title: "Cơ chế Reconciliation & Virtual DOM hoạt động ra sao?",
+                        duration: "17:00",
+                        summary: "Hiểu rõ cách React so sánh cây giao diện và lý do thuộc tính 'key' lại cực kỳ quan trọng khi render danh sách.",
+                        quiz: {
+                            question: "Tại sao không nên dùng chỉ số mảng (index) làm 'key' cho danh sách có thể thêm/xóa phần tử?",
+                            options: ["Gây lỗi cú pháp", "Có thể gây lỗi giữ nhầm trạng thái component khi sắp xếp lại", "Không chạy được trên Chrome", "Tốn dung lượng ổ cứng"],
+                            correctIndex: 1
+                        }
+                    },
+                    {
+                        id: "6-2",
+                        title: "Làm chủ useEffect, useMemo & Custom Hooks",
+                        duration: "21:30",
+                        summary: "Tách logic nghiệp vụ vào Custom Hooks sạch đẹp và tránh vòng lặp re-render vô hạn.",
+                        quiz: {
+                            question: "Hook nào được dùng để ghi nhớ kết quả của một phép tính nặng giữa các lần render?",
+                            options: ["useState", "useMemo", "useRef", "useId"],
+                            correctIndex: 1
+                        }
+                    },
+                    {
+                        id: "6-3",
+                        title: "Tối ưu hiệu năng với Code Splitting & Lazy Loading",
+                        duration: "15:45",
+                        summary: "Giảm kích thước gói JavaScript ban đầu để ứng dụng tải tức thì ngay cả trên kết nối 4G yếu.",
+                        quiz: {
+                            question: "Component nào của React kết hợp với React.lazy để hiển thị giao diện chờ (loading)?",
+                            options: ["Fragment", "Suspense", "Portal", "StrictMode"],
+                            correctIndex: 1
+                        }
+                    }
+                ]
+            },
+            {
+                id: 7,
+                title: "Quản Lý Thời Gian & Phương Pháp Học Tập Hiệu Quả",
+                category: "Kỹ năng mềm",
+                level: "Cơ bản",
+                instructor: "ThS. Võ Thanh Tâm",
+                rating: 4.8,
+                students: 11200,
+                duration: "8 giờ",
+                priceTag: "Miễn phí",
+                image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80",
+                description: "Đánh bay sự trì hoãn bằng ma trận Eisenhower, lặp lại ngắt quãng (Spaced Repetition) và kỹ thuật Feynman.",
+                lessons: [
+                    {
+                        id: "7-1",
+                        title: "Kỹ thuật Active Recall & Lặp lại ngắt quãng",
+                        duration: "12:15",
+                        summary: "Khoa học não bộ chứng minh việc tự kiểm tra lại kiến thức hiệu quả gấp 3 lần việc đọc đi đọc lại giáo trình.",
+                        quiz: {
+                            question: "Active Recall (Chủ động gợi nhớ) là phương pháp học tập nào?",
+                            options: ["Gạch chân toàn bộ sách bằng bút dạ quang", "Tự kiểm tra và truy xuất kiến thức từ trí nhớ không nhìn tài liệu", "Nghe nhạc lớn khi đọc sách", "Chép nguyên văn bài giảng"],
+                            correctIndex: 1
+                        }
+                    },
+                    {
+                        id: "7-2",
+                        title: "Kỹ thuật Feynman: Hiểu sâu bằng cách giảng lại đơn giản",
+                        duration: "11:00",
+                        summary: "4 bước diễn giải một khái niệm phức tạp bằng ngôn ngữ đời thường để phát hiện ngay lỗ hổng kiến thức.",
+                        quiz: {
+                            question: "Bước quan trọng nhất trong kỹ thuật Feynman là gì?",
+                            options: ["Học thuộc lòng định nghĩa dài", "Giải thích lại kiến thức thật đơn giản như đang dạy người mới", "Đọc 10 cuốn sách cùng lúc", "Thức trắng đêm ôn thi"],
+                            correctIndex: 1
+                        }
+                    },
+                    {
+                        id: "7-3",
+                        title: "Thiết lập hệ thống Deep Work không xao nhãng",
+                        duration: "13:30",
+                        summary: "Cách chia khối thời gian (Time Blocking) và loại bỏ thông báo gây mất tập trung trong 90 phút vàng mỗi ngày.",
+                        quiz: {
+                            question: "Một phiên làm việc tập trung tiêu chuẩn theo kỹ thuật Pomodoro kéo dài bao lâu?",
+                            options: ["10 phút", "25 phút", "60 phút", "90 phút"],
+                            correctIndex: 1
+                        }
+                    }
+                ]
+            },
+            {
+                id: 8,
+                title: "Giao Tiếp Tiếng Anh Công Sở & Thuyết Trình Tự Tin",
+                category: "Ngoại ngữ",
+                level: "Trung cấp",
+                instructor: "Thầy David Nguyễn",
+                rating: 4.9,
+                students: 7640,
+                duration: "16 giờ",
+                priceTag: "Pro",
+                image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80",
+                description: "Nâng tầm phong thái chuyên nghiệp khi viết Email, họp trực tuyến với đối tác quốc tế và thuyết trình dự án.",
+                lessons: [
+                    {
+                        id: "8-1",
+                        title: "Cấu trúc viết Email chuyên nghiệp & lịch sự",
+                        duration: "14:00",
+                        summary: "Cách viết tiêu đề (Subject line) súc tích, mở đầu thân thiện và lời kêu gọi hành động (Call to action) rõ ràng.",
+                        quiz: {
+                            question: "Cụm từ nào phù hợp để kết thúc một email trang trọng gửi khách hàng?",
+                            options: ["See ya!", "Best regards,", "Bye bye,", "Later,"],
+                            correctIndex: 1
+                        }
+                    },
+                    {
+                        id: "8-2",
+                        title: "Mẫu câu dẫn dắt và điều phối cuộc họp Online",
+                        duration: "15:25",
+                        summary: "Những cấu trúc tiếng Anh tự nhiên để mở đầu cuộc họp, mời đồng nghiệp phát biểu và tóm tắt đầu việc cuối buổi.",
+                        quiz: {
+                            question: "Câu nào dùng để lịch sự ngắt lời và đóng góp ý kiến trong cuộc họp?",
+                            options: ["Stop talking now!", "Sorry to jump in, may I add a quick point?", "You are wrong.", "Listen to me!"],
+                            correctIndex: 1
+                        }
+                    },
+                    {
+                        id: "8-3",
+                        title: "Kỹ năng Signposting khi thuyết trình bằng Tiếng Anh",
+                        duration: "16:10",
+                        summary: "Sử dụng từ chuyển ý mượt mà giúp khán giả dễ dàng theo dõi mạch thuyết trình và ấn tượng ở phần Q&A.",
+                        quiz: {
+                            question: "'Signposting' trong thuyết trình có nghĩa là gì?",
+                            options: ["Đọc chữ trên slide", "Dùng câu dẫn chuyển đoạn giúp người nghe nắm rõ cấu trúc bài nói", "Tắt đèn phòng họp", "Nói thật nhanh"],
+                            correctIndex: 1
+                        }
+                    }
+                ]
+            }
+        ];
+
+        const CATEGORIES = [
+            { id: "Tất cả", icon: "layout-grid" },
+            { id: "Lập trình", icon: "code-2" },
+            { id: "Thiết kế UI/UX", icon: "palette" },
+            { id: "Khoa học Dữ liệu", icon: "bar-chart-3" },
+            { id: "Ngoại ngữ", icon: "languages" },
+            { id: "Kỹ năng mềm", icon: "sparkles" }
+        ];
+
+        const FLASHCARD_DECKS = {
+            english: [
+                { front: "Scalability", hint: "Danh từ • Kiến trúc hệ thống", back: "Khả năng mở rộng của hệ thống khi lượng người dùng hoặc dữ liệu tăng lên.", example: "Cloud computing improves application scalability." },
+                { front: "Refactor", hint: "Động từ • Lập trình", back: "Tái cấu trúc mã nguồn giúp sạch hơn, dễ bảo trì hơn mà không đổi tính năng.", example: "We need to refactor the authentication module." },
+                { front: "Latency", hint: "Danh từ • Mạng & Hiệu năng", back: "Độ trễ — thời gian phản hồi từ lúc gửi yêu cầu đến lúc nhận kết quả.", example: "Using a CDN significantly reduces network latency." },
+                { front: "Deployment", hint: "Danh từ • DevOps", back: "Quá trình triển khai và phát hành ứng dụng lên môi trường chạy thực tế.", example: "Automated deployment saves hours of manual work." },
+                { front: "Responsive Design", hint: "Cụm danh từ • Frontend", back: "Thiết kế web thích ứng linh hoạt theo kích thước màn hình điện thoại, tablet, desktop.", example: "Tailwind CSS makes responsive design very fast." }
+            ],
+            coding: [
+                { front: "Closure là gì?", hint: "JavaScript Core", back: "Một hàm có khả năng ghi nhớ và truy cập biến thuộc phạm vi bên ngoài ngay cả khi hàm ngoài đã thực thi xong.", example: "Thường dùng để tạo biến private và factory function." },
+                { front: "RESTful API", hint: "Kiến trúc Backend", back: "Chuẩn thiết kế giao tiếp giữa Client và Server qua giao thức HTTP với các phương thức GET, POST, PUT, DELETE.", example: "GET /api/courses trả về danh sách khóa học." },
+                { front: "Big O Notation", hint: "Cấu trúc dữ liệu & Giải thuật", back: "Ký hiệu toán học mô tả độ phức tạp thời gian hoặc bộ nhớ của thuật toán khi kích thước dữ liệu tăng.", example: "Tìm kiếm nhị phân có độ phức tạp O(log n)." },
+                { front: "Semantic HTML", hint: "Web Standards", back: "Sử dụng thẻ HTML mang ý nghĩa ngữ nghĩa rõ ràng (<header>, <main>, <article>) tốt cho SEO và trình đọc màn hình.", example: "Dùng <button> cho hành động thay vì <div>." }
+            ],
+            design: [
+                { front: "Visual Hierarchy", hint: "Nguyên lý UI", back: "Phân cấp thị giác — sắp xếp kích thước, màu sắc và độ đậm để dẫn dắt mắt người dùng đến thông tin quan trọng nhất trước.", example: "Tiêu đề lớn đậm, nội dung phụ màu xám nhạt." },
+                { front: "Whitespace (Negative Space)", hint: "Bố cục thiết kế", back: "Khoảng trắng giữa các thành phần giúp giao diện thoáng đãng, giảm tải nhận thức và tăng tính thẩm mỹ cao cấp.", example: "Không nên nhồi nhét quá nhiều chữ trong 1 thẻ." },
+                { front: "Affordance", hint: "Tâm lý học UX", back: "Dấu hiệu trực quan gợi ý cho người dùng biết một thành phần có thể tương tác như thế nào.", example: "Nút bấm có đổ bóng nhẹ và đổi màu khi di chuột." },
+                { front: "Micro-interaction", hint: "Trải nghiệm tương tác", back: "Những phản hồi hoạt ảnh nhỏ tinh tế khi người dùng thao tác (thả tim, gạt nút, thêm vào giỏ).", example: "Hiệu ứng lật thẻ mượt mà tạo cảm giác thích thú." }
+            ]
+        };
+
+        // ==================== IN-MEMORY APPLICATION STATE ====================
+        const state = {
+            currentView: "explore", // 'explore' | 'my-learning' | 'study-hub'
+            user: {
+                name: "Minh Anh",
+                xp: 1250,
+                streak: 7,
+                dailyGoal: 4,
+                todayCompleted: 2
+            },
+            filters: {
+                category: "Tất cả",
+                level: "Tất cả",
+                search: ""
+            },
+            // Khóa học đã đăng ký sẵn (ID 1 và 4) để người dùng trải nghiệm ngay
+            enrolledCourseIds: [1, 4],
+            // Danh sách ID bài học đã hoàn thành
+            completedLessons: new Set(["1-1", "4-1"]),
+            // Danh sách ID bài học đã trả lời đúng Quiz (để không cộng XP lặp lại)
+            answeredQuizzes: new Set(),
+            // Ghi chú cá nhân theo từng bài học { lessonId: "text" }
+            lessonNotes: {
+                "1-1": "Nhớ ôn lại cách hoạt động của cây DOM và ưu tiên dùng Semantic HTML."
+            },
+            // Trạng thái phòng học hiện tại
+            classroom: {
+                courseId: null,
+                lessonIndex: 0,
+                isPlaying: false,
+                progressPct: 15,
+                timerId: null
+            },
+            // Trạng thái Pomodoro
+            pomodoro: {
+                mode: "focus", // 'focus' | 'short' | 'long'
+                durations: { focus: 25 * 60, short: 5 * 60, long: 15 * 60 },
+                remaining: 25 * 60,
+                running: false,
+                intervalId: null,
+                completedSessions: 0
+            },
+            // Trạng thái Flashcards
+            flashcards: {
+                deckKey: "english",
+                index: 0,
+                flipped: false,
+                mastered: new Set() // key: `${deckKey}_${index}`
+            },
+            // Danh sách mục tiêu học hôm nay
+            tasks: [
+                { id: 1, text: "Hoàn thành bài 2 khóa JavaScript Hiện Đại", done: true },
+                { id: 2, text: "Ôn tập 5 thẻ Flashcard tiếng Anh IT", done: false },
+                { id: 3, text: "Tập trung 1 phiên Pomodoro 25 phút", done: false }
+            ],
+            activeCertCode: ""
+        };
+
+        // ==================== HELPER & UI FEEDBACK ====================
+        function formatNumber(num) {
+            return new Intl.NumberFormat('vi-VN').format(num);
+        }
+
+        function getInitials(name) {
+            const parts = name.trim().split(/\s+/);
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const colorMap = {
+                success: 'bg-slate-900 text-white border-emerald-500/40',
+                info: 'bg-indigo-600 text-white border-indigo-400',
+                warning: 'bg-amber-600 text-white border-amber-400'
+            };
+            const iconMap = {
+                success: 'check-circle-2',
+                info: 'sparkles',
+                warning: 'alert-circle'
+            };
+
+            toast.className = `toast-anim pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border ${colorMap[type] || colorMap.success}`;
+            toast.innerHTML = `
+                <i data-lucide="${iconMap[type] || 'check-circle-2'}" class="w-5 h-5 shrink-0 ${type === 'success' ? 'text-emerald-400' : 'text-white'}"></i>
+                <p class="text-xs sm:text-sm font-medium leading-snug flex-1">${message}</p>
+            `;
+            container.appendChild(toast);
+            safeCreateIcons({ nodes: [toast] });
+
+            setTimeout(() => {
+                toast.style.transition = 'all 0.25s ease';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(8px)';
+                setTimeout(() => toast.remove(), 250);
+            }, 3000);
+        }
+
+        function addXP(amount, reason) {
+            state.user.xp += amount;
+            updateUserStatsUI();
+            if (reason) {
+                showToast(`+${amount} XP • ${reason}`, 'info');
+            }
+        }
+
+        function updateUserStatsUI() {
+            document.getElementById('xpDisplay').textContent = `${formatNumber(state.user.xp)} XP`;
+            document.getElementById('streakDisplay').textContent = `${state.user.streak} ngày`;
+            document.getElementById('headerUserName').textContent = state.user.name;
+            document.getElementById('heroUserName').textContent = state.user.name;
+            document.getElementById('avatarInitials').textContent = getInitials(state.user.name);
+            document.getElementById('navEnrolledBadge').textContent = state.enrolledCourseIds.length;
+
+            // Mục tiêu hôm nay
+            const pct = Math.min(100, Math.round((state.user.todayCompleted / state.user.dailyGoal) * 100));
+            document.getElementById('dailyGoalText').textContent = `${state.user.todayCompleted} / ${state.user.dailyGoal} bài`;
+            document.getElementById('dailyGoalBar').style.width = `${pct}%`;
+        }
+
+        // ==================== NAVIGATION VIEW SWITCHING ====================
+        function switchMainView(viewName) {
+            state.currentView = viewName;
+
+            document.querySelectorAll('.main-view').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(`view-${viewName}`);
+            if (target) target.classList.remove('hidden');
+
+            // Cập nhật giao diện tab active (cả desktop & mobile)
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+                const isActive = btn.dataset.navTab === viewName;
+                if (isActive) {
+                    btn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                    btn.classList.remove('text-slate-600', 'hover:text-slate-900', 'bg-slate-100');
+                } else {
+                    btn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                    btn.classList.add('text-slate-600', 'hover:text-slate-900');
+                }
+            });
+
+            if (viewName === 'my-learning') {
+                renderMyLearning();
+            } else if (viewName === 'study-hub') {
+                renderFlashcard();
+                renderStudyTasks();
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function scrollToCatalog() {
+            const el = document.getElementById('catalog-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ==================== COURSE PROGRESS CALCULATION ====================
+        function getCourseProgress(courseId) {
+            const course = COURSES.find(c => c.id === courseId);
+            if (!course || !course.lessons.length) return { completed: 0, total: 0, percent: 0 };
+            const completed = course.lessons.filter(l => state.completedLessons.has(l.id)).length;
+            const total = course.lessons.length;
+            const percent = Math.round((completed / total) * 100);
+            return { completed, total, percent };
+        }
+
+        // ==================== EXPLORE CATALOG RENDERING ====================
+        function renderCategoryFilters() {
+            const bar = document.getElementById('categoryFilterBar');
+            bar.innerHTML = CATEGORIES.map(cat => {
+                const active = state.filters.category === cat.id;
+                return `
+                    <button 
+                        onclick="selectCourseCategory('${cat.id}')"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+                            active 
+                                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25' 
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
+                        }"
+                    >
+                        <i data-lucide="${cat.icon}" class="w-4 h-4"></i>
+                        <span>${cat.id}</span>
+                    </button>
+                `;
+            }).join('');
+            safeCreateIcons({ nodes: [bar] });
+        }
+
+        function renderCourses() {
+            const grid = document.getElementById('courseGrid');
+            const emptyState = document.getElementById('courseEmptyState');
+            const countEl = document.getElementById('courseCountDisplay');
+
+            const query = state.filters.search.trim().toLowerCase();
+            const filtered = COURSES.filter(c => {
+                const matchCat = state.filters.category === "Tất cả" || c.category === state.filters.category;
+                const matchLevel = state.filters.level === "Tất cả" || c.level === state.filters.level;
+                const matchSearch = !query ||
+                    c.title.toLowerCase().includes(query) ||
+                    c.category.toLowerCase().includes(query) ||
+                    c.instructor.toLowerCase().includes(query);
+                return matchCat && matchLevel && matchSearch;
+            });
+
+            countEl.textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filtered.map(course => {
+                const isEnrolled = state.enrolledCourseIds.includes(course.id);
+                const prog = getCourseProgress(course.id);
+                const fallbackImg = `https://placehold.co/600x360/eef2ff/4f46e5?text=${encodeURIComponent(course.category)}`;
+
+                const levelBadgeColor = {
+                    "Cơ bản": "bg-emerald-50 text-emerald-700 border-emerald-200",
+                    "Trung cấp": "bg-amber-50 text-amber-700 border-amber-200",
+                    "Nâng cao": "bg-rose-50 text-rose-700 border-rose-200"
+                }[course.level] || "bg-slate-100 text-slate-700";
+
+                return `
+                    <article class="group bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-300 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col overflow-hidden">
+                        
+                        <!-- Thumbnail -->
+                        <div class="relative aspect-[16/10] bg-slate-100 overflow-hidden cursor-pointer" onclick="handleCoursePrimaryAction(${course.id})">
+                            <img 
+                                src="${course.image}" 
+                                alt="${course.title}"
+                                loading="lazy"
+                                onerror="this.onerror=null; this.src='${fallbackImg}';"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            >
+                            <div class="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
+                                <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${levelBadgeColor} backdrop-blur-sm">
+                                    ${course.level}
+                                </span>
+                                <span class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold shadow-sm ${
+                                    course.priceTag === 'Miễn phí' 
+                                        ? 'bg-emerald-600 text-white' 
+                                        : 'bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white'
+                                }">
+                                    ${course.priceTag}
+                                </span>
+                            </div>
+                            ${isEnrolled ? `
+                                <div class="absolute bottom-2.5 left-3 right-3 bg-slate-900/80 backdrop-blur-md text-white px-3 py-1.5 rounded-xl flex items-center justify-between text-[11px]">
+                                    <span class="font-semibold">Tiến độ: ${prog.percent}%</span>
+                                    <div class="w-20 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                                        <div class="h-full bg-emerald-400 rounded-full" style="width: ${prog.percent}%"></div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Content -->
+                        <div class="p-4 sm:p-5 flex-1 flex flex-col">
+                            <div class="flex items-center justify-between text-xs mb-1.5">
+                                <span class="font-semibold text-indigo-600">${course.category}</span>
+                                <span class="flex items-center gap-1 font-bold text-slate-700">
+                                    <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
+                                    ${course.rating}
+                                </span>
+                            </div>
+
+                            <h3 
+                                onclick="handleCoursePrimaryAction(${course.id})"
+                                class="font-bold text-slate-900 text-sm sm:text-base leading-snug line-clamp-2 hover:text-indigo-600 cursor-pointer transition mb-2"
+                            >
+                                ${course.title}
+                            </h3>
+
+                            <p class="text-xs text-slate-500 line-clamp-2 mb-3 leading-relaxed">
+                                ${course.description}
+                            </p>
+
+                            <div class="flex items-center gap-2 text-xs text-slate-500 mb-4">
+                                <i data-lucide="user-check" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span class="truncate font-medium">${course.instructor}</span>
+                            </div>
+
+                            <!-- Footer Meta & CTA -->
+                            <div class="mt-auto pt-3 border-t border-slate-100 space-y-3">
+                                <div class="flex items-center justify-between text-xs text-slate-500">
+                                    <span class="flex items-center gap-1">
+                                        <i data-lucide="play-square" class="w-3.5 h-3.5 text-indigo-500"></i>
+                                        ${course.lessons.length} bài học
+                                    </span>
+                                    <span class="flex items-center gap-1">
+                                        <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+                                        ${course.duration}
+                                    </span>
+                                    <span class="flex items-center gap-1">
+                                        <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
+                                        ${formatNumber(course.students)}
+                                    </span>
+                                </div>
+
+                                <button 
+                                    onclick="handleCoursePrimaryAction(${course.id})"
+                                    class="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition active:scale-95 ${
+                                        isEnrolled 
+                                            ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                                            : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20'
+                                    }"
+                                >
+                                    <i data-lucide="${isEnrolled ? 'play-circle' : 'plus-circle'}" class="w-4 h-4"></i>
+                                    <span>${isEnrolled ? (prog.percent === 100 ? 'Ôn tập & Chứng chỉ' : 'Vào học ngay') : 'Đăng ký học ngay'}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            safeCreateIcons({ nodes: [grid] });
+        }
+
+        function selectCourseCategory(catId) {
+            state.filters.category = catId;
+            renderCategoryFilters();
+            renderCourses();
+        }
+
+        function handleLevelChange(val) {
+            state.filters.level = val;
+            renderCourses();
+        }
+
+        function resetCourseFilters() {
+            state.filters = { category: "Tất cả", level: "Tất cả", search: "" };
+            document.getElementById('courseSearchInput').value = '';
+            document.getElementById('levelFilterSelect').value = 'Tất cả';
+            renderCategoryFilters();
+            renderCourses();
+        }
+
+        function handleCoursePrimaryAction(courseId) {
+            const course = COURSES.find(c => c.id === courseId);
+            if (!course) return;
+
+            if (!state.enrolledCourseIds.includes(courseId)) {
+                state.enrolledCourseIds.push(courseId);
+                updateUserStatsUI();
+                renderCourses();
+                showToast(`Đăng ký thành công khóa "${course.title}"! Bắt đầu học ngay nhé.`, 'success');
+            }
+            openClassroom(courseId);
+        }
+
+        // ==================== MY LEARNING VIEW ====================
+        function renderMyLearning() {
+            const grid = document.getElementById('myLearningGrid');
+            const enrolledCourses = COURSES.filter(c => state.enrolledCourseIds.includes(c.id));
+
+            // Cập nhật thống kê
+            document.getElementById('statEnrolledCount').textContent = enrolledCourses.length;
+            document.getElementById('statCompletedLessons').textContent = state.completedLessons.size;
+            const certsEarned = enrolledCourses.filter(c => getCourseProgress(c.id).percent === 100).length;
+            document.getElementById('statCertCount').textContent = certsEarned;
+
+            if (enrolledCourses.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-16 bg-white rounded-3xl border border-slate-200">
+                        <p class="font-bold text-slate-900">Bạn chưa đăng ký khóa học nào</p>
+                        <button onclick="switchMainView('explore')" class="mt-4 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm">
+                            Khám phá khóa học ngay
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = enrolledCourses.map(course => {
+                const prog = getCourseProgress(course.id);
+                const isDone = prog.percent === 100;
+                const fallbackImg = `https://placehold.co/600x340/eef2ff/4f46e5?text=${encodeURIComponent(course.category)}`;
+
+                return `
+                    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-lg transition overflow-hidden flex flex-col">
+                        <div class="relative aspect-[16/9] bg-slate-100">
+                            <img 
+                                src="${course.image}" 
+                                alt="${course.title}"
+                                onerror="this.onerror=null; this.src='${fallbackImg}';"
+                                class="w-full h-full object-cover"
+                            >
+                            ${isDone ? `
+                                <span class="absolute top-3 right-3 px-3 py-1 rounded-full bg-emerald-500 text-white text-xs font-bold shadow-md flex items-center gap-1">
+                                    <i data-lucide="award" class="w-3.5 h-3.5"></i> Đã hoàn thành
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="p-5 flex-1 flex flex-col space-y-4">
+                            <div>
+                                <span class="text-xs font-bold text-indigo-600">${course.category}</span>
+                                <h3 class="font-bold text-slate-900 text-base mt-1 leading-snug">${course.title}</h3>
+                                <p class="text-xs text-slate-500 mt-1">Giảng viên: ${course.instructor}</p>
+                            </div>
+
+                            <div class="space-y-1.5 mt-auto">
+                                <div class="flex items-center justify-between text-xs font-semibold">
+                                    <span class="text-slate-600">${prog.completed}/${prog.total} bài học</span>
+                                    <span class="${isDone ? 'text-emerald-600' : 'text-indigo-600'} font-bold">${prog.percent}%</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full transition-all duration-500 ${isDone ? 'bg-emerald-500' : 'bg-indigo-600'}" style="width: ${prog.percent}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2 pt-1">
+                                <button 
+                                    onclick="openClassroom(${course.id})"
+                                    class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm transition"
+                                >
+                                    ${isDone ? 'Xem lại bài giảng' : 'Tiếp tục học'}
+                                </button>
+                                ${isDone ? `
+                                    <button 
+                                        onclick="openCertificate(${course.id})"
+                                        class="px-3.5 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-xs flex items-center gap-1 transition"
+                                        title="Xem chứng chỉ"
+                                    >
+                                        <i data-lucide="award" class="w-4 h-4"></i>
+                                        <span>Chứng chỉ</span>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            safeCreateIcons({ nodes: [grid] });
+        }
+
+        // ==================== INTERACTIVE CLASSROOM LOGIC ====================
+        function openClassroom(courseId) {
+            const course = COURSES.find(c => c.id === courseId);
+            if (!course) return;
+
+            // Đảm bảo đã đăng ký
+            if (!state.enrolledCourseIds.includes(courseId)) {
+                state.enrolledCourseIds.push(courseId);
+                updateUserStatsUI();
+            }
+
+            // Tự động mở bài học đầu tiên chưa hoàn thành
+            let startIdx = course.lessons.findIndex(l => !state.completedLessons.has(l.id));
+            if (startIdx === -1) startIdx = 0;
+
+            stopLessonPlayback();
+            state.classroom.courseId = courseId;
+            state.classroom.lessonIndex = startIdx;
+            state.classroom.progressPct = 15;
+
+            renderClassroom();
+            document.getElementById('classroomModal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeClassroom() {
+            stopLessonPlayback();
+            document.getElementById('classroomModal').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            renderCourses();
+            if (state.currentView === 'my-learning') renderMyLearning();
+        }
+
+        function renderClassroom() {
+            const course = COURSES.find(c => c.id === state.classroom.courseId);
+            if (!course) return;
+
+            const lesson = course.lessons[state.classroom.lessonIndex];
+            const prog = getCourseProgress(course.id);
+            const isCompleted = state.completedLessons.has(lesson.id);
+
+            // Top bar
+            document.getElementById('crCourseTitle').textContent = course.title;
+            document.getElementById('crProgressText').textContent = `Tiến độ: ${prog.percent}%`;
+            document.getElementById('crProgressBar').style.width = `${prog.percent}%`;
+            document.getElementById('crLessonsRatio').textContent = `${prog.completed}/${prog.total} bài`;
+
+            const certBtn = document.getElementById('crCertBtn');
+            if (prog.percent === 100) {
+                certBtn.classList.remove('hidden');
+                certBtn.classList.add('inline-flex');
+            } else {
+                certBtn.classList.add('hidden');
+                certBtn.classList.remove('inline-flex');
+            }
+
+            // Video stage
+            document.getElementById('crStageBg').src = course.image;
+            document.getElementById('crLessonBadge').textContent = `Bài ${state.classroom.lessonIndex + 1} / ${course.lessons.length}`;
+            document.getElementById('crLessonDuration').textContent = lesson.duration;
+            document.getElementById('crLessonHeading').textContent = lesson.title;
+            document.getElementById('crLessonTitleSub').textContent = lesson.title;
+            document.getElementById('crLessonSummary').textContent = lesson.summary;
+            document.getElementById('crVideoProgress').style.width = `${state.classroom.progressPct}%`;
+
+            // Complete button
+            const compBtn = document.getElementById('crCompleteLessonBtn');
+            if (isCompleted) {
+                compBtn.className = "px-4 py-2.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold text-sm flex items-center gap-2 transition";
+                compBtn.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i><span>Đã hoàn thành bài này</span>`;
+            } else {
+                compBtn.className = "px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm flex items-center gap-2 shadow-sm transition";
+                compBtn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Đánh dấu hoàn thành</span>`;
+            }
+
+            // Render Quiz
+            renderLessonQuiz(lesson);
+
+            // Personal Notes
+            document.getElementById('crLessonNoteInput').value = state.lessonNotes[lesson.id] || '';
+            document.getElementById('crNoteSavedHint').classList.add('hidden');
+
+            // Render Syllabus Sidebar
+            const syllabusEl = document.getElementById('crSyllabusList');
+            syllabusEl.innerHTML = course.lessons.map((item, idx) => {
+                const active = idx === state.classroom.lessonIndex;
+                const done = state.completedLessons.has(item.id);
+                return `
+                    <button 
+                        onclick="selectClassroomLesson(${idx})"
+                        class="w-full text-left p-3.5 rounded-2xl border transition flex items-start gap-3 ${
+                            active 
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20' 
+                                : 'bg-white hover:bg-indigo-50/50 text-slate-800 border-slate-200/80'
+                        }"
+                    >
+                        <div class="mt-0.5 shrink-0">
+                            ${done 
+                                ? `<i data-lucide="check-circle-2" class="w-5 h-5 ${active ? 'text-emerald-300' : 'text-emerald-500'}"></i>`
+                                : `<i data-lucide="circle-play" class="w-5 h-5 ${active ? 'text-indigo-200' : 'text-slate-400'}"></i>`
+                            }
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold leading-snug">${idx + 1}. ${item.title}</p>
+                            <p class="text-[11px] mt-1 ${active ? 'text-indigo-200' : 'text-slate-400'}">
+                                Thời lượng: ${item.duration} • Có Quiz
+                            </p>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+
+            safeCreateIcons({ nodes: [document.getElementById('classroomModal')] });
+        }
+
+        function selectClassroomLesson(index) {
+            stopLessonPlayback();
+            state.classroom.lessonIndex = index;
+            state.classroom.progressPct = 15;
+            renderClassroom();
+        }
+
+        function toggleLessonPlayback() {
+            const playIcon = document.getElementById('crPlayIcon');
+            const stateText = document.getElementById('crPlaybackStateText');
+
+            if (state.classroom.isPlaying) {
+                stopLessonPlayback();
+                return;
+            }
+
+            state.classroom.isPlaying = true;
+            if (state.classroom.progressPct >= 100) state.classroom.progressPct = 0;
+
+            playIcon.setAttribute('data-lucide', 'pause');
+            stateText.textContent = "Đang phát bài giảng tương tác...";
+            safeCreateIcons({ nodes: [document.getElementById('crPlayBtn')] });
+
+            state.classroom.timerId = setInterval(() => {
+                state.classroom.progressPct = Math.min(100, state.classroom.progressPct + 5);
+                document.getElementById('crVideoProgress').style.width = `${state.classroom.progressPct}%`;
+                if (state.classroom.progressPct >= 100) {
+                    stopLessonPlayback();
+                    stateText.textContent = "Đã xem hết bài giảng! Hãy làm câu hỏi trắc nghiệm bên dưới.";
+                }
+            }, 600);
+        }
+
+        function stopLessonPlayback() {
+            state.classroom.isPlaying = false;
+            if (state.classroom.timerId) {
+                clearInterval(state.classroom.timerId);
+                state.classroom.timerId = null;
+            }
+            const playBtn = document.getElementById('crPlayBtn');
+            const playIcon = document.getElementById('crPlayIcon');
+            const stateText = document.getElementById('crPlaybackStateText');
+            if (playIcon) {
+                playIcon.setAttribute('data-lucide', 'play');
+                safeCreateIcons({ nodes: [playBtn] });
+            }
+            if (stateText) {
+                stateText.textContent = "Nhấn Play để tiếp tục xem bài giảng";
+            }
+        }
+
+        function toggleCurrentLessonComplete() {
+            const course = COURSES.find(c => c.id === state.classroom.courseId);
+            if (!course) return;
+            const lesson = course.lessons[state.classroom.lessonIndex];
+
+            if (state.completedLessons.has(lesson.id)) {
+                state.completedLessons.delete(lesson.id);
+                showToast("Đã bỏ đánh dấu hoàn thành bài học.", "info");
+            } else {
+                state.completedLessons.add(lesson.id);
+                state.user.todayCompleted += 1;
+                addXP(50, `Hoàn thành bài "${lesson.title}"`);
+
+                const prog = getCourseProgress(course.id);
+                if (prog.percent === 100) {
+                    setTimeout(() => {
+                        showToast(`Chúc mừng! Bạn đã hoàn thành 100% khóa học và mở khóa Chứng chỉ!`, 'success');
+                    }, 600);
+                }
+            }
+            updateUserStatsUI();
+            renderClassroom();
+        }
+
+        function renderLessonQuiz(lesson) {
+            const q = lesson.quiz;
+            document.getElementById('crQuizQuestion').textContent = q.question;
+            const statusEl = document.getElementById('crQuizStatus');
+            const feedbackEl = document.getElementById('crQuizFeedback');
+            const optionsEl = document.getElementById('crQuizOptions');
+
+            const alreadySolved = state.answeredQuizzes.has(lesson.id);
+            statusEl.textContent = alreadySolved ? "Đã hoàn thành ✓" : "Chọn 1 đáp án đúng";
+            feedbackEl.classList.add('hidden');
+
+            optionsEl.innerHTML = q.options.map((opt, idx) => `
+                <button 
+                    onclick="checkQuizAnswer('${lesson.id}', ${idx})"
+                    class="quiz-opt-btn text-left p-3 rounded-xl bg-white hover:bg-indigo-100/70 border border-indigo-200/80 text-xs sm:text-sm font-semibold text-slate-800 transition flex items-center gap-2.5"
+                >
+                    <span class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">
+                        ${String.fromCharCode(65 + idx)}
+                    </span>
+                    <span>${opt}</span>
+                </button>
+            `).join('');
+        }
+
+        function checkQuizAnswer(lessonId, selectedIndex) {
+            const course = COURSES.find(c => c.id === state.classroom.courseId);
+            if (!course) return;
+            const lesson = course.lessons.find(l => l.id === lessonId);
+            if (!lesson) return;
+
+            const isCorrect = selectedIndex === lesson.quiz.correctIndex;
+            const feedbackEl = document.getElementById('crQuizFeedback');
+            feedbackEl.classList.remove('hidden');
+
+            if (isCorrect) {
+                feedbackEl.className = "text-xs sm:text-sm font-semibold p-3 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-200";
+                feedbackEl.textContent = "Chính xác tuyệt đối! Bạn đã nắm vững kiến thức trọng tâm của bài học này.";
+                if (!state.answeredQuizzes.has(lessonId)) {
+                    state.answeredQuizzes.add(lessonId);
+                    document.getElementById('crQuizStatus').textContent = "Đã hoàn thành ✓";
+                    addXP(30, "Trả lời đúng bài kiểm tra nhanh");
+                }
+            } else {
+                feedbackEl.className = "text-xs sm:text-sm font-semibold p-3 rounded-xl bg-rose-100 text-rose-800 border border-rose-200";
+                feedbackEl.textContent = "Chưa chính xác rồi! Hãy xem lại phần kiến thức trọng tâm và thử chọn đáp án khác nhé.";
+            }
+        }
+
+        function saveCurrentLessonNote(val) {
+            const course = COURSES.find(c => c.id === state.classroom.courseId);
+            if (!course) return;
+            const lesson = course.lessons[state.classroom.lessonIndex];
+            state.lessonNotes[lesson.id] = val;
+            document.getElementById('crNoteSavedHint').classList.remove('hidden');
+        }
+
+        // ==================== CERTIFICATE MODAL ====================
+        function openCertificateForCurrentCourse() {
+            if (state.classroom.courseId) {
+                openCertificate(state.classroom.courseId);
+            }
+        }
+
+        function openCertificate(courseId) {
+            const course = COURSES.find(c => c.id === courseId);
+            if (!course) return;
+
+            const today = new Date();
+            const dateStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+            state.activeCertCode = `EDU-2026-${course.id}${Math.floor(1000 + Math.random() * 9000)}`;
+
+            document.getElementById('certStudentName').textContent = state.user.name;
+            document.getElementById('certCourseTitle').textContent = course.title;
+            document.getElementById('certDateDisplay').textContent = dateStr;
+            document.getElementById('certCodeDisplay').textContent = state.activeCertCode;
+
+            document.getElementById('certificateModal').classList.remove('hidden');
+            safeCreateIcons({ nodes: [document.getElementById('certificateModal')] });
+        }
+
+        function closeCertificateModal() {
+            document.getElementById('certificateModal').classList.add('hidden');
+        }
+
+        function copyCertificateId() {
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = state.activeCertCode;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast(`Đã sao chép mã chứng chỉ ${state.activeCertCode}!`, 'success');
+            } catch (e) {
+                showToast(`Mã chứng chỉ: ${state.activeCertCode}`, 'info');
+            }
+        }
+
+        // ==================== POMODORO TIMER LOGIC ====================
+        function updatePomodoroDisplay() {
+            const mins = Math.floor(state.pomodoro.remaining / 60);
+            const secs = state.pomodoro.remaining % 60;
+            document.getElementById('pomoTimeDisplay').textContent =
+                `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+            const total = state.pomodoro.durations[state.pomodoro.mode];
+            const pct = Math.max(0, (state.pomodoro.remaining / total) * 100);
+            document.getElementById('pomoProgressBar').style.width = `${pct}%`;
+            document.getElementById('pomoSessionBadge').textContent = `Đã xong: ${state.pomodoro.completedSessions} phiên`;
+        }
+
+        function setPomodoroMode(mode) {
+            pausePomodoro();
+            state.pomodoro.mode = mode;
+            state.pomodoro.remaining = state.pomodoro.durations[mode];
+
+            document.querySelectorAll('.pomo-mode-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+                btn.classList.add('text-slate-600');
+            });
+            const activeBtn = document.getElementById(`pomoMode-${mode}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+                activeBtn.classList.remove('text-slate-600');
+            }
+
+            const labels = {
+                focus: "Sẵn sàng tập trung học sâu",
+                short: "Nghỉ giải lao 5 phút thư giãn mắt",
+                long: "Nghỉ dài 15 phút nạp lại năng lượng"
+            };
+            document.getElementById('pomoStatusText').textContent = labels[mode];
+            updatePomodoroDisplay();
+        }
+
+        function togglePomodoro() {
+            if (state.pomodoro.running) {
+                pausePomodoro();
+            } else {
+                startPomodoro();
+            }
+        }
+
+        function startPomodoro() {
+            if (state.pomodoro.running) return;
+            state.pomodoro.running = true;
+
+            const btn = document.getElementById('pomoToggleBtn');
+            btn.className = "flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition active:scale-95";
+            btn.innerHTML = `<i data-lucide="pause" class="w-4 h-4"></i><span>Tạm dừng</span>`;
+            safeCreateIcons({ nodes: [btn] });
+
+            document.getElementById('pomoStatusText').textContent =
+                state.pomodoro.mode === 'focus' ? "Đang trong phiên tập trung..." : "Đang trong thời gian nghỉ...";
+
+            state.pomodoro.intervalId = setInterval(() => {
+                if (state.pomodoro.remaining > 0) {
+                    state.pomodoro.remaining--;
+                    updatePomodoroDisplay();
+                } else {
+                    pausePomodoro();
+                    if (state.pomodoro.mode === 'focus') {
+                        state.pomodoro.completedSessions++;
+                        addXP(40, "Hoàn thành 1 phiên Pomodoro tập trung!");
+                    } else {
+                        showToast("Hết giờ nghỉ rồi! Quay lại học tiếp thôi nào.", "info");
+                    }
+                    state.pomodoro.remaining = state.pomodoro.durations[state.pomodoro.mode];
+                    updatePomodoroDisplay();
+                }
+            }, 1000);
+        }
+
+        function pausePomodoro() {
+            state.pomodoro.running = false;
+            if (state.pomodoro.intervalId) {
+                clearInterval(state.pomodoro.intervalId);
+                state.pomodoro.intervalId = null;
+            }
+            const btn = document.getElementById('pomoToggleBtn');
+            if (btn) {
+                btn.className = "flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition active:scale-95";
+                btn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i><span>Bắt đầu</span>`;
+                safeCreateIcons({ nodes: [btn] });
+            }
+        }
+
+        function resetPomodoro() {
+            pausePomodoro();
+            state.pomodoro.remaining = state.pomodoro.durations[state.pomodoro.mode];
+            document.getElementById('pomoStatusText').textContent = "Đã đặt lại đồng hồ";
+            updatePomodoroDisplay();
+        }
+
+        // ==================== FLASHCARDS LOGIC ====================
+        function getCurrentDeck() {
+            return FLASHCARD_DECKS[state.flashcards.deckKey] || [];
+        }
+
+        function renderFlashcard() {
+            const deck = getCurrentDeck();
+            if (!deck.length) return;
+
+            const idx = state.flashcards.index;
+            const card = deck[idx];
+            const cardKey = `${state.flashcards.deckKey}_${idx}`;
+            const isMastered = state.flashcards.mastered.has(cardKey);
+
+            // Reset flip class
+            const inner = document.getElementById('flashcardInner');
+            if (state.flashcards.flipped) {
+                inner.classList.add('rotate-y-180');
+            } else {
+                inner.classList.remove('rotate-y-180');
+            }
+
+            document.getElementById('fcFrontText').textContent = card.front;
+            document.getElementById('fcHintText').textContent = card.hint || "Thẻ ghi nhớ tự tạo";
+            document.getElementById('fcBackText').textContent = card.back;
+            document.getElementById('fcExampleText').textContent = card.example ? `Ví dụ: ${card.example}` : "Ôn lại định nghĩa này bằng cách đặt 1 ví dụ của riêng bạn.";
+
+            document.getElementById('flashcardCounter').textContent = `Thẻ ${idx + 1} / ${deck.length}`;
+
+            // Đếm số thẻ đã thuộc trong bộ hiện tại
+            let masteredCount = 0;
+            deck.forEach((_, i) => {
+                if (state.flashcards.mastered.has(`${state.flashcards.deckKey}_${i}`)) masteredCount++;
+            });
+            document.getElementById('flashcardMasteredText').textContent = `Đã thuộc: ${masteredCount}/${deck.length} thẻ`;
+
+            const masterBtn = document.getElementById('fcMasterBtn');
+            if (isMastered) {
+                masterBtn.className = "px-4 py-2.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold text-sm flex items-center gap-2 transition";
+                masterBtn.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i><span>Đã thuộc thẻ này</span>`;
+            } else {
+                masterBtn.className = "px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center gap-2 transition shadow-sm";
+                masterBtn.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i><span>Đánh dấu đã thuộc</span>`;
+            }
+            safeCreateIcons({ nodes: [masterBtn] });
+        }
+
+        function flipFlashcard() {
+            state.flashcards.flipped = !state.flashcards.flipped;
+            document.getElementById('flashcardInner').classList.toggle('rotate-y-180', state.flashcards.flipped);
+        }
+
+        function navigateFlashcard(delta) {
+            const deck = getCurrentDeck();
+            state.flashcards.flipped = false;
+            state.flashcards.index = (state.flashcards.index + delta + deck.length) % deck.length;
+            renderFlashcard();
+        }
+
+        function changeFlashcardDeck(deckKey) {
+            state.flashcards.deckKey = deckKey;
+            state.flashcards.index = 0;
+            state.flashcards.flipped = false;
+            renderFlashcard();
+        }
+
+        function toggleMasterCurrentCard() {
+            const cardKey = `${state.flashcards.deckKey}_${state.flashcards.index}`;
+            if (state.flashcards.mastered.has(cardKey)) {
+                state.flashcards.mastered.delete(cardKey);
+            } else {
+                state.flashcards.mastered.add(cardKey);
+                addXP(15, "Ghi nhớ thành công 1 thẻ Flashcard");
+            }
+            renderFlashcard();
+        }
+
+        function addCustomFlashcard(event) {
+            event.preventDefault();
+            const frontInput = document.getElementById('customFcFront');
+            const backInput = document.getElementById('customFcBack');
+            const front = frontInput.value.trim();
+            const back = backInput.value.trim();
+            if (!front || !back) return;
+
+            const deck = getCurrentDeck();
+            deck.push({
+                front,
+                hint: "Thẻ do bạn tạo",
+                back,
+                example: ""
+            });
+
+            frontInput.value = '';
+            backInput.value = '';
+            state.flashcards.index = deck.length - 1;
+            state.flashcards.flipped = false;
+            renderFlashcard();
+            showToast(`Đã thêm thẻ "${front}" vào bộ ôn tập!`, 'success');
+        }
+
+        // ==================== STUDY TASKS LOGIC ====================
+        function renderStudyTasks() {
+            const list = document.getElementById('studyTaskList');
+            const doneCount = state.tasks.filter(t => t.done).length;
+            document.getElementById('todoProgressBadge').textContent = `${doneCount}/${state.tasks.length} xong`;
+
+            if (state.tasks.length === 0) {
+                list.innerHTML = `<li class="text-xs text-slate-400 text-center py-4">Chưa có mục tiêu nào. Hãy thêm mục tiêu đầu tiên!</li>`;
+                return;
+            }
+
+            list.innerHTML = state.tasks.map(task => `
+                <li class="flex items-center justify-between gap-2.5 p-3 rounded-xl border ${task.done ? 'bg-slate-50 border-slate-100' : 'bg-white border-slate-200/80'} transition">
+                    <button onclick="toggleStudyTask(${task.id})" class="flex items-center gap-2.5 text-left flex-1 min-w-0">
+                        <span class="w-5 h-5 rounded-md flex items-center justify-center border shrink-0 transition ${
+                            task.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 bg-white'
+                        }">
+                            ${task.done ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : ''}
+                        </span>
+                        <span class="text-xs sm:text-sm font-medium truncate ${task.done ? 'line-through text-slate-400' : 'text-slate-800'}">
+                            ${task.text}
+                        </span>
+                    </button>
+                    <button onclick="deleteStudyTask(${task.id})" class="p-1 text-slate-400 hover:text-rose-600 transition shrink-0" aria-label="Xóa mục tiêu">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </li>
+            `).join('');
+
+            safeCreateIcons({ nodes: [list] });
+        }
+
+        function addStudyTask(event) {
+            event.preventDefault();
+            const input = document.getElementById('newTaskInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            state.tasks.unshift({ id: Date.now(), text, done: false });
+            input.value = '';
+            renderStudyTasks();
+        }
+
+        function toggleStudyTask(taskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (!task) return;
+            task.done = !task.done;
+            if (task.done) {
+                addXP(10, "Hoàn thành mục tiêu học tập!");
+            }
+            renderStudyTasks();
+        }
+
+        function deleteStudyTask(taskId) {
+            state.tasks = state.tasks.filter(t => t.id !== taskId);
+            renderStudyTasks();
+        }
+
+        // ==================== PROFILE SETTINGS MODAL ====================
+        function openProfileModal() {
+            document.getElementById('profileNameInput').value = state.user.name;
+            document.getElementById('profileGoalInput').value = String(state.user.dailyGoal);
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        function saveUserProfile(event) {
+            event.preventDefault();
+            const newName = document.getElementById('profileNameInput').value.trim();
+            const newGoal = parseInt(document.getElementById('profileGoalInput').value, 10) || 4;
+            if (newName) {
+                state.user.name = newName;
+                state.user.dailyGoal = newGoal;
+                updateUserStatsUI();
+                closeProfileModal();
+                showToast("Đã cập nhật thông tin hồ sơ học viên!", "success");
+            }
+        }
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            initTailwindConfig();
+
+            // Lắng nghe tìm kiếm khóa học thời gian thực
+            document.getElementById('courseSearchInput').addEventListener('input', (e) => {
+                state.filters.search = e.target.value;
+                renderCourses();
+            });
+
+            // Đóng modal bằng phím Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeCertificateModal();
+                    closeProfileModal();
+                    closeClassroom();
+                }
+            });
+
+            // Khởi tạo giao diện ban đầu
+            updateUserStatsUI();
+            renderCategoryFilters();
+            renderCourses();
+            switchMainView('explore');
+            updatePomodoroDisplay();
+            renderFlashcard();
+            renderStudyTasks();
+            safeCreateIcons();
+        });
+    </script>
+</body>
+</html>
